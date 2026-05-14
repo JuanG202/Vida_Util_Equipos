@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Colección de equipos: acceso abierto de lectura y escritura.
+    // IMPORTANTE: cuando quieras restringir acceso, cambia las reglas aquí.
+    match /equipos/{docId} {
+      allow read, write: if true;
+    }
+
+    // Colección de celulares
+    match /celulares/{docId} {
+      allow read, write: if true;
+    }
+  }
+}

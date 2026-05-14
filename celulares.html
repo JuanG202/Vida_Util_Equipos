@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AssetTracker PRO — Gestión de Celulares</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+
+  <!-- Loading overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Conectando con la base de datos…</p>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="brand-icon">📱</div>
+      <div class="brand-name">Departamento<span>TI</span> PRO</div>
+    </div>
+    <div class="header-right">
+      <span class="firebase-badge">
+        <span class="conn-dot" id="connDot"></span>
+        <span id="connLabel">Conectando…</span>
+      </span>
+      <span class="header-date" id="currentDate"></span>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <div class="page-heading">
+      <h1 class="page-title">Gestión de Celulares</h1>
+      <p class="page-subtitle">Monitoreo y control de equipos móviles y líneas corporativas</p>
+    </div>
+
+    <!-- NAVEGACIÓN -->
+    <nav class="main-nav">
+      <a href="index.html" class="nav-item">PCs / Laptops</a>
+      <a href="celulares.html" class="nav-item active">Celulares</a>
+    </nav>
+
+    <div id="alerta" class="alerta"></div>
+
+    <!-- STAT CARDS -->
+    <div class="cards">
+      <div class="card total" onclick="document.getElementById('filtro').value = 'todos'; renderTabla();">
+        <div class="card-label">Total Celulares</div>
+        <div class="card-value" id="total">–</div>
+        <div class="card-icon">📱</div>
+      </div>
+      <div class="card vigente" onclick="document.getElementById('filtro').value = 'verde'; renderTabla();">
+        <div class="card-label">Vigentes</div>
+        <div class="card-value" id="vigentes">–</div>
+        <div class="card-icon">✅</div>
+      </div>
+      <div class="card proximo" onclick="document.getElementById('filtro').value = 'amarillo'; renderTabla();">
+        <div class="card-label">Por Vencer</div>
+        <div class="card-value" id="proximos">–</div>
+        <div class="card-icon">⏳</div>
+      </div>
+      <div class="card vencido" onclick="document.getElementById('filtro').value = 'rojo'; renderTabla();">
+        <div class="card-label">Vencidos</div>
+        <div class="card-value" id="vencidos">–</div>
+        <div class="card-icon">🚨</div>
+      </div>
+    </div>
+
+    <!-- MAIN ROW -->
+    <div class="main-row">
+
+      <!-- FORM PANEL -->
+      <div class="form-panel">
+        <div class="panel-title">Registrar / Editar Celular</div>
+
+        <div class="form-row" style="grid-template-columns: 2fr 1.5fr 1fr 1fr;">
+          <div class="field">
+            <label>Nombre de usuario *</label>
+            <input type="text" id="usuario" placeholder="Ej: Juan Pérez">
+          </div>
+          <div class="field">
+            <label>Departamento</label>
+            <select id="departamento">
+              <option value="">Seleccionar…</option>
+              <option value="Contabilidad">Contabilidad</option>
+              <option value="TI">TI</option>
+              <option value="Cartera">Cartera</option>
+              <option value="Comercial">Comercial</option>
+              <option value="Compras">Compras</option>
+              <option value="Gerencia">Gerencia</option>
+              <option value="Controller de Gestión">Controller de Gestión</option>
+              <option value="Recursos Humanos">Recursos Humanos</option>
+              <option value="Televentas">Televentas</option>
+              <option value="Punto de Ventas">Punto de Ventas</option>
+              <option value="Tesorería">Tesorería</option>
+              <option value="Agencia Pasto">Agencia Pasto</option>
+              <option value="Agencia Neiva">Agencia Neiva</option>
+              <option value="Agencia Cafetero">Agencia Cafetero</option>
+              <option value="Agencia Alameda">Agencia Alameda</option>
+              <option value="Despachos">Despachos</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Marca</label>
+            <input type="text" id="marca" placeholder="Ej: Samsung, Motorola">
+          </div>
+          <div class="field">
+            <label>Modelo</label>
+            <input type="text" id="modelo" placeholder="Ej: Galaxy S23">
+          </div>
+        </div>
+
+        <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+          <div class="field">
+            <label>IMEI 1 *</label>
+            <input type="text" id="imei1" placeholder="IMEI principal">
+          </div>
+          <div class="field">
+            <label>IMEI 2</label>
+            <input type="text" id="imei2" placeholder="Opcional">
+          </div>
+          <div class="field">
+            <label>Fecha de compra *</label>
+            <input type="date" id="fecha">
+          </div>
+          <div class="field">
+            <label>Vida útil (años) *</label>
+            <input type="number" id="vida" value="4" placeholder="Ej: 4" min="1" max="30">
+          </div>
+        </div>
+
+        <div class="form-row" style="grid-template-columns: 1fr 2fr auto; align-items: end;">
+          <div class="field">
+            <label>Asignación</label>
+            <select id="estado">
+              <option value="Activo / Asignado">Activo / Asignado</option>
+              <option value="Disponible">Disponible</option>
+              <option value="En Reparación">En Reparación</option>
+              <option value="De Baja">De Baja</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Observación</label>
+            <input type="text" id="observacion" placeholder="Detalles adicionales">
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button class="btn btn-primary" onclick="agregar()" id="btnGuardar">
+              <span id="btnLabel">＋ Guardar</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="editBar" class="edit-bar" style="display:none;">
+          ✏️ Modo edición activo —
+          <button class="btn-link" onclick="cancelarEdicion()">Cancelar y limpiar</button>
+        </div>
+      </div>
+
+      <!-- SIDE PANEL -->
+      <div class="side-panel">
+        <div class="panel-title" style="margin-bottom:0;padding-bottom:0;border-bottom:none;">Acciones</div>
+
+        <div class="filter-group" style="margin-bottom: 12px;">
+          <span class="filter-label">Búsqueda rápida</span>
+          <input type="text" id="busqueda" placeholder="Usuario, IMEI, marca..." onkeyup="renderTabla()">
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-label">Filtrar por vigencia</span>
+          <select id="filtro" onchange="renderTabla()">
+            <option value="todos">Todos</option>
+            <option value="verde">Vigentes</option>
+            <option value="amarillo">Por Vencer</option>
+            <option value="rojo">Vencidos</option>
+          </select>
+        </div>
+
+        <button class="btn btn-export" onclick="exportarCSV()">↓ Exportar CSV</button>
+      </div>
+
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+      <div class="table-header">
+        <div class="table-title">Inventario de Celulares</div>
+        <div class="table-count" id="tableCount">– registros</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Departamento</th>
+            <th>Marca / Modelo</th>
+            <th>IMEI 1</th>
+            <th>IMEI 2</th>
+            <th>F. Compra</th>
+            <th>F. Vencimiento</th>
+            <th>Vida útil</th>
+            <th>Asignación</th>
+            <th>Estado (Vida)</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla"></tbody>
+      </table>
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <div class="empty-icon">📱</div>
+        <div class="empty-text">No hay celulares registrados. Agrega el primero arriba.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    /* ══════════════════════════════════════════
+       🔥 CONFIGURACIÓN FIREBASE
+    ══════════════════════════════════════════ */
+    const firebaseConfig = {
+      apiKey: "AIzaSyCO3iDDUpD9ox85WzxLJHm5PRfCoAOmb_E",
+      authDomain: "vida-util-equipos.firebaseapp.com",
+      projectId: "vida-util-equipos",
+      storageBucket: "vida-util-equipos.firebasestorage.app",
+      messagingSenderId: "907673313512",
+      appId: "1:907673313512:web:2918b364990886d934a95d"
+    };
+
+    /* ── Init ── */
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const colRef = db.collection("celulares");
+
+    let equipos = [];
+    let editDocId = null;
+
+    /* ── Header date ── */
+    document.getElementById("currentDate").textContent =
+      new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
+
+    /* ════════════════════════════════════════
+       HELPERS
+    ════════════════════════════════════════ */
+    function setConnected(ok) {
+      const dot = document.getElementById("connDot");
+      const label = document.getElementById("connLabel");
+      dot.style.background = ok ? "var(--green)" : "var(--red)";
+      dot.style.boxShadow = ok ? "0 0 7px var(--green)" : "0 0 7px var(--red)";
+      label.textContent = ok ? "En línea" : "Sin conexión";
+    }
+
+    function calcularVencimiento(fecha, vida) {
+      if (!fecha || !vida) return "—";
+      const f = new Date(fecha + "T00:00:00");
+      f.setFullYear(f.getFullYear() + parseInt(vida));
+      return f.toISOString().split("T")[0];
+    }
+
+    function evaluar(fecha, vida) {
+      if (!fecha || !vida) return { texto: "Desconocido", clase: "verde" };
+      const hoy = new Date();
+      const fin = new Date(calcularVencimiento(fecha, vida) + "T00:00:00");
+      const meses = (fin - hoy) / (1000 * 60 * 60 * 24 * 30);
+      if (meses <= 0) return { texto: "Vencido", clase: "rojo" };
+      if (meses <= 6) return { texto: "Por vencer", clase: "amarillo" };
+      return { texto: "Vigente", clase: "verde" };
+    }
+
+    function formatFecha(f) {
+      if (!f || f === "—") return "—";
+      return new Date(f + "T00:00:00").toLocaleDateString("es-CO",
+        { day: "2-digit", month: "short", year: "numeric" });
+    }
+
+    /* ════════════════════════════════════════
+       🔥 LISTENER EN TIEMPO REAL
+    ════════════════════════════════════════ */
+    colRef.orderBy("createdAt", "asc").onSnapshot(
+      snapshot => {
+        equipos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderTabla();
+        document.getElementById("loadingOverlay").style.display = "none";
+        setConnected(true);
+      },
+      err => {
+        console.error(err);
+        setConnected(false);
+        document.getElementById("loadingOverlay").style.display = "none";
+      }
+    );
+
+    /* ════════════════════════════════════════
+       RENDER TABLA
+    ════════════════════════════════════════ */
+    function renderTabla() {
+      const tbody = document.getElementById("tabla");
+      const filtro = document.getElementById("filtro").value;
+      const busqueda = document.getElementById("busqueda").value.toLowerCase();
+      tbody.innerHTML = "";
+
+      let vigentes = 0, proximos = 0, vencidos = 0, visible = 0;
+
+      equipos.forEach(e => {
+        const estadoVida = evaluar(e.fecha, e.vida);
+
+        if (estadoVida.clase === "verde") vigentes++;
+        else if (estadoVida.clase === "amarillo") proximos++;
+        else if (estadoVida.clase === "rojo") vencidos++;
+
+        const passEstado = filtro === "todos" || estadoVida.clase === filtro;
+        
+        const textoFila = `${e.usuario || ''} ${e.imei1 || ''} ${e.imei2 || ''} ${e.modelo || ''} ${e.marca || ''} ${e.departamento || ''}`.toLowerCase();
+        const passBusqueda = busqueda === "" || textoFila.includes(busqueda);
+
+        if (!passEstado || !passBusqueda) return;
+        visible++;
+
+        const usuarioSafe = (e.usuario || "").replace(/'/g, "&#39;");
+
+        tbody.innerHTML += `
+      <tr>
+        <td>${e.usuario || "—"}</td>
+        <td>${e.departamento || "—"}</td>
+        <td>
+          <div>${e.modelo || "—"}</div>
+          <div class="td-secondary">${e.marca || "—"}</div>
+        </td>
+        <td class="mono">${e.imei1 || "—"}</td>
+        <td class="mono">${e.imei2 || "—"}</td>
+        <td class="mono">${formatFecha(e.fecha)}</td>
+        <td class="mono">${formatFecha(calcularVencimiento(e.fecha, e.vida))}</td>
+        <td>${e.vida ? e.vida + ' años' : '—'}</td>
+        <td>${e.estado || "—"}</td>
+        <td>
+          <span class="badge badge-${estadoVida.clase}">
+            <span class="dot dot-${estadoVida.clase}"></span>
+            ${estadoVida.texto}
+          </span>
+        </td>
+        <td>
+          <div class="actions-cell">
+            <button class="btn btn-icon btn-edit"
+                    onclick="editar('${e.id}')" title="Editar">✏️</button>
+            <button class="btn btn-icon btn-delete"
+                    onclick="eliminar('${e.id}','${usuarioSafe}')" title="Eliminar">🗑</button>
+          </div>
+        </td>
+      </tr>`;
+      });
+
+      document.getElementById("total").textContent = equipos.length;
+      document.getElementById("vigentes").textContent = vigentes;
+      document.getElementById("proximos").textContent = proximos;
+      document.getElementById("vencidos").textContent = vencidos;
+      document.getElementById("tableCount").textContent =
+        `${visible} registro${visible !== 1 ? "s" : ""}`;
+      document.getElementById("emptyState").style.display = visible === 0 ? "block" : "none";
+
+      const alerta = document.getElementById("alerta");
+      if (vencidos > 0) {
+        alerta.style.display = "flex";
+        alerta.innerHTML = `⚠️ <strong>${vencidos} celular${vencidos !== 1 ? "es" : ""} vencido${vencidos !== 1 ? "s" : ""}</strong> — Se requiere revisión inmediata.`;
+      } else {
+        alerta.style.display = "none";
+      }
+    }
+
+    /* ════════════════════════════════════════
+       AGREGAR / ACTUALIZAR
+    ════════════════════════════════════════ */
+    async function agregar() {
+      const usuario = document.getElementById("usuario").value.trim();
+      const departamento = document.getElementById("departamento").value;
+      const imei1 = document.getElementById("imei1").value.trim();
+      const imei2 = document.getElementById("imei2").value.trim();
+      const marca = document.getElementById("marca").value.trim();
+      const modelo = document.getElementById("modelo").value.trim();
+      const estado = document.getElementById("estado").value;
+      const observacion = document.getElementById("observacion").value.trim();
+      const fecha = document.getElementById("fecha").value;
+      const vida = document.getElementById("vida").value;
+
+      if (!usuario || !imei1 || !fecha || !vida) {
+        alert("Los campos Nombre de usuario, IMEI 1, Fecha de compra y Vida útil son obligatorios.");
+        return;
+      }
+
+      const btn = document.getElementById("btnGuardar");
+      btn.disabled = true;
+      document.getElementById("btnLabel").textContent = "Guardando…";
+
+      const data = {
+        usuario, departamento, imei1, imei2, marca, modelo, estado, observacion,
+        fecha, vida: parseInt(vida),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      try {
+        if (editDocId) {
+          await colRef.doc(editDocId).update(data);
+          cancelarEdicion();
+        } else {
+          data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+          await colRef.add(data);
+        }
+        limpiar();
+      } catch (err) {
+        alert("Error al guardar: " + err.message);
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+        document.getElementById("btnLabel").textContent =
+          editDocId ? "✔ Actualizar" : "＋ Guardar";
+      }
+    }
+
+    /* ════════════════════════════════════════
+       EDITAR
+    ════════════════════════════════════════ */
+    function editar(docId) {
+      const e = equipos.find(x => x.id === docId);
+      if (!e) return;
+      document.getElementById("usuario").value = e.usuario || "";
+      document.getElementById("departamento").value = e.departamento || "";
+      document.getElementById("imei1").value = e.imei1 || "";
+      document.getElementById("imei2").value = e.imei2 || "";
+      document.getElementById("marca").value = e.marca || "";
+      document.getElementById("modelo").value = e.modelo || "";
+      document.getElementById("estado").value = e.estado || "Activo / Asignado";
+      document.getElementById("observacion").value = e.observacion || "";
+      document.getElementById("fecha").value = e.fecha || "";
+      document.getElementById("vida").value = e.vida || 4;
+      
+      editDocId = docId;
+      document.getElementById("btnLabel").textContent = "✔ Actualizar";
+      document.getElementById("editBar").style.display = "flex";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function cancelarEdicion() {
+      editDocId = null;
+      document.getElementById("btnLabel").textContent = "＋ Guardar";
+      document.getElementById("editBar").style.display = "none";
+      limpiar();
+    }
+
+    /* ════════════════════════════════════════
+       ELIMINAR
+    ════════════════════════════════════════ */
+    async function eliminar(docId, usuario) {
+      if (!confirm(`¿Eliminar el celular asignado a "${usuario}"?`)) return;
+      try {
+        await colRef.doc(docId).delete();
+      } catch (err) {
+        alert("Error al eliminar: " + err.message);
+      }
+    }
+
+    /* ════════════════════════════════════════
+       LIMPIAR FORM
+    ════════════════════════════════════════ */
+    function limpiar() {
+      ["usuario", "imei1", "imei2", "marca", "modelo", "observacion", "fecha"]
+        .forEach(id => document.getElementById(id).value = "");
+      document.getElementById("departamento").value = "";
+      document.getElementById("estado").value = "Activo / Asignado";
+      document.getElementById("vida").value = 4;
+    }
+
+    /* ════════════════════════════════════════
+       EXPORTAR CSV
+    ════════════════════════════════════════ */
+    function exportarCSV() {
+      if (!equipos.length) { alert("No hay datos para exportar."); return; }
+      const headers = ["Usuario", "Departamento", "Marca", "Modelo", "IMEI 1", "IMEI 2", "F. Compra", "F. Vencimiento", "Vida útil", "Asignación", "Estado (Vida)", "Observacion"];
+      const rows = equipos.map(e => {
+        const est = evaluar(e.fecha, e.vida);
+        return [
+          `"${e.usuario || ''}"`, `"${e.departamento || ''}"`, `"${e.marca || ''}"`,
+          `"${e.modelo || ''}"`, `"${e.imei1 || ''}"`, `"${e.imei2 || ''}"`,
+          e.fecha || '', calcularVencimiento(e.fecha, e.vida) || '', e.vida || '',
+          `"${e.estado || ''}"`, `"${est.texto || ''}"`, `"${e.observacion || ''}"`
+        ].join(",");
+      });
+      const csv = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "inventario_celulares.csv";
+      link.click();
+    }
+  </script>
+</body>
+
+</html>
